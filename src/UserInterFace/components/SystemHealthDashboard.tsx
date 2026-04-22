@@ -1,11 +1,14 @@
-// ============================================================
-// System Health Dashboard - Backend & ML Service Testing
-// Real-time connectivity and integration testing
-// ============================================================
-
-import { useState, useEffect } from 'react';
-import { Database, Activity, Brain, CheckCircle, XCircle, AlertCircle, RefreshCw } from 'lucide-react';
-import { checkBackendHealth, mlAPI } from '../services/api';
+import { useState, useEffect, useCallback } from 'react';
+import {
+  Database,
+  Activity,
+  Brain,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  RefreshCw
+} from 'lucide-react';
+import { checkBackendHealth } from '../services/api';
 import { toast } from 'sonner';
 
 interface HealthStatus {
@@ -14,73 +17,101 @@ interface HealthStatus {
   ml: boolean;
 }
 
+const initialState: HealthStatus = {
+  backend: false,
+  database: false,
+  ml: false,
+};
+
 export function SystemHealthDashboard() {
-  const [health, setHealth] = useState<HealthStatus>({
-    backend: false,
-    database: false,
-    ml: false,
-  });
+  const [health, setHealth] = useState<HealthStatus>(initialState);
   const [loading, setLoading] = useState(false);
   const [lastCheck, setLastCheck] = useState<Date | null>(null);
 
-  const checkHealth = async () => {
+  const checkHealth = useCallback(async () => {
     setLoading(true);
+
     try {
       const status = await checkBackendHealth();
-      setHealth(status);
+
+      // Ensure fallback values (avoid undefined issues)
+      const safeStatus: HealthStatus = {
+        backend: !!status?.backend,
+        database: !!status?.database,
+        ml: !!status?.ml,
+      };
+
+      setHealth(safeStatus);
       setLastCheck(new Date());
-      
-      const allOnline = status.backend && status.database && status.ml;
+
+      const allOnline =
+        safeStatus.backend && safeStatus.database && safeStatus.ml;
+
       if (allOnline) {
         toast.success('All systems operational', {
           description: 'Backend, Database, and ML services are connected.',
         });
       } else {
         toast.warning('Some systems offline', {
-          description: 'Check the status below for details.',
+          description: 'Check individual service status below.',
         });
       }
     } catch (error) {
+      console.error('Health check error:', error);
+
       toast.error('Health check failed', {
-        description: 'Unable to connect to backend services.',
+        description: 'Unable to reach backend services.',
       });
-      setHealth({ backend: false, database: false, ml: false });
+
+      setHealth(initialState);
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    checkHealth();
-    // Auto-refresh every 30 seconds
-    const interval = setInterval(checkHealth, 30000);
-    return () => clearInterval(interval);
   }, []);
 
-  const getStatusIcon = (status: boolean) => {
-    if (status) {
-      return <CheckCircle className="w-5 h-5 text-emerald-500" />;
-    }
-    return <XCircle className="w-5 h-5 text-red-500" />;
-  };
+  useEffect(() => {
+    let isMounted = true;
 
-  const getStatusBadge = (status: boolean) => {
-    if (status) {
-      return (
-        <span className="px-3 py-1 bg-emerald-900/30 text-emerald-400 border border-emerald-600 rounded-md text-xs font-bold uppercase tracking-wider">
-          ONLINE
-        </span>
-      );
-    }
-    return (
-      <span className="px-3 py-1 bg-red-900/30 text-red-400 border border-red-600 rounded-md text-xs font-bold uppercase tracking-wider">
-        OFFLINE
-      </span>
+    const runHealthCheck = async () => {
+      if (isMounted) await checkHealth();
+    };
+
+    runHealthCheck();
+
+    const interval = setInterval(runHealthCheck, 30000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [checkHealth]);
+
+  const getStatusIcon = (status: boolean) =>
+    status ? (
+      <CheckCircle className="w-5 h-5 text-emerald-500" />
+    ) : (
+      <XCircle className="w-5 h-5 text-red-500" />
     );
-  };
+
+  const getStatusBadge = (status: boolean) => (
+    <span
+      className={`px-3 py-1 border rounded-md text-xs font-bold uppercase tracking-wider ${
+        status
+          ? 'bg-emerald-900/30 text-emerald-400 border-emerald-600'
+          : 'bg-red-900/30 text-red-400 border-red-600'
+      }`}
+    >
+      {status ? 'ONLINE' : 'OFFLINE'}
+    </span>
+  );
+
+  const allSystemsOnline =
+    health.backend && health.database && health.ml;
 
   return (
     <div className="bg-linear-to-br from-slate-900 to-slate-800 border-2 border-slate-700 rounded-md p-6">
+      
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <Activity className="w-6 h-6 text-emerald-500" />
@@ -88,6 +119,7 @@ export function SystemHealthDashboard() {
             System Health Monitor
           </h3>
         </div>
+
         <button
           onClick={checkHealth}
           disabled={loading}
@@ -98,6 +130,7 @@ export function SystemHealthDashboard() {
         </button>
       </div>
 
+      {/* Last Check */}
       {lastCheck && (
         <p className="text-xs text-slate-500 mb-4 font-mono">
           Last checked: {lastCheck.toLocaleTimeString()}
@@ -105,141 +138,106 @@ export function SystemHealthDashboard() {
       )}
 
       <div className="space-y-4">
-        {/* Backend API */}
-        <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-md">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-3">
-              <Database className="w-5 h-5 text-blue-500" />
-              <div>
-                <p className="text-sm font-bold text-white mb-0 uppercase tracking-wide">
-                  Backend API Server
-                </p>
-                <p className="text-xs text-slate-400 mb-0">
-                  Node.js + Express (Port 5000)
-                </p>
+        
+        {/* Service Card Component */}
+        {[
+          {
+            name: 'Backend API Server',
+            desc: 'Node.js + Express (Port 5000)',
+            icon: <Database className="w-5 h-5 text-blue-500" />,
+            status: health.backend,
+            successText: 'API endpoints reachable',
+          },
+          {
+            name: 'MongoDB Database',
+            desc: 'Data persistence layer',
+            icon: <Database className="w-5 h-5 text-emerald-500" />,
+            status: health.database,
+            successText: 'Database connected',
+          },
+          {
+            name: 'ML Prediction Service',
+            desc: 'Python Flask AI Engine',
+            icon: <Brain className="w-5 h-5 text-purple-500" />,
+            status: health.ml,
+            successText: 'ML models responding',
+          },
+        ].map((service, i) => (
+          <div
+            key={i}
+            className="p-4 bg-slate-800/50 border border-slate-700 rounded-md"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-3">
+                {service.icon}
+                <div>
+                  <p className="text-sm font-bold text-white uppercase">
+                    {service.name}
+                  </p>
+                  <p className="text-xs text-slate-400">{service.desc}</p>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              {getStatusIcon(health.backend)}
-              {getStatusBadge(health.backend)}
-            </div>
-          </div>
-          {health.backend && (
-            <div className="mt-2 pt-2 border-t border-slate-700">
-              <p className="text-xs text-emerald-400 mb-0 flex items-center gap-2">
-                <CheckCircle className="w-3 h-3" />
-                Authentication & API endpoints accessible
-              </p>
-            </div>
-          )}
-        </div>
 
-        {/* MongoDB Database */}
-        <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-md">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-3">
-              <Database className="w-5 h-5 text-emerald-500" />
-              <div>
-                <p className="text-sm font-bold text-white mb-0 uppercase tracking-wide">
-                  MongoDB Database
-                </p>
-                <p className="text-xs text-slate-400 mb-0">
-                  Data persistence layer
-                </p>
+              <div className="flex items-center gap-3">
+                {getStatusIcon(service.status)}
+                {getStatusBadge(service.status)}
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              {getStatusIcon(health.database)}
-              {getStatusBadge(health.database)}
-            </div>
-          </div>
-          {health.database && (
-            <div className="mt-2 pt-2 border-t border-slate-700">
-              <p className="text-xs text-emerald-400 mb-0 flex items-center gap-2">
-                <CheckCircle className="w-3 h-3" />
-                Database connection established
-              </p>
-            </div>
-          )}
-        </div>
 
-        {/* ML Service */}
-        <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-md">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-3">
-              <Brain className="w-5 h-5 text-purple-500" />
-              <div>
-                <p className="text-sm font-bold text-white mb-0 uppercase tracking-wide">
-                  ML Prediction Service
-                </p>
-                <p className="text-xs text-slate-400 mb-0">
-                  Python Flask AI Engine
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              {getStatusIcon(health.ml)}
-              {getStatusBadge(health.ml)}
-            </div>
-          </div>
-          {health.ml && (
-            <div className="mt-2 pt-2 border-t border-slate-700">
-              <p className="text-xs text-emerald-400 mb-0 flex items-center gap-2">
-                <CheckCircle className="w-3 h-3" />
-                Disease prediction models ready
+            {service.status && (
+              <p className="text-xs text-emerald-400 mt-2">
+                ✔ {service.successText}
               </p>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        ))}
 
         {/* Overall Status */}
-        <div className={`p-4 rounded-md border-2 ${
-          health.backend && health.database && health.ml
-            ? 'bg-emerald-900/20 border-emerald-600'
-            : 'bg-yellow-900/20 border-yellow-600'
-        }`}>
+        <div
+          className={`p-4 rounded-md border-2 ${
+            allSystemsOnline
+              ? 'bg-emerald-900/20 border-emerald-600'
+              : 'bg-yellow-900/20 border-yellow-600'
+          }`}
+        >
           <div className="flex items-start gap-3">
-            {health.backend && health.database && health.ml ? (
-              <CheckCircle className="w-5 h-5 text-emerald-500 mt-0.5" />
+            {allSystemsOnline ? (
+              <CheckCircle className="w-5 h-5 text-emerald-500" />
             ) : (
-              <AlertCircle className="w-5 h-5 text-yellow-500 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-yellow-500" />
             )}
+
             <div>
-              <p className={`text-sm font-bold mb-1 uppercase tracking-wide ${
-                health.backend && health.database && health.ml
-                  ? 'text-emerald-400'
-                  : 'text-yellow-400'
-              }`}>
-                {health.backend && health.database && health.ml
+              <p
+                className={`text-sm font-bold uppercase ${
+                  allSystemsOnline
+                    ? 'text-emerald-400'
+                    : 'text-yellow-400'
+                }`}
+              >
+                {allSystemsOnline
                   ? 'All Systems Operational'
                   : 'Demo Mode Active'}
               </p>
-              <p className="text-xs text-slate-400 mb-0">
-                {health.backend && health.database && health.ml
-                  ? 'Full functionality available with real-time data synchronization'
-                  : 'Application running with mock data. Start backend services for full functionality.'}
+
+              <p className="text-xs text-slate-400">
+                {allSystemsOnline
+                  ? 'Real-time services fully connected'
+                  : 'Running with mock data. Start backend services.'}
               </p>
             </div>
           </div>
         </div>
 
-        {/* Connection Instructions */}
-        {(!health.backend || !health.database || !health.ml) && (
-          <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-md">
-            <p className="text-xs font-bold text-white mb-2 uppercase tracking-wider">
-              Quick Start Instructions:
-            </p>
-            <div className="space-y-2 text-xs text-slate-400 font-mono">
-              <p className="mb-0">1. Backend: cd backend && npm install && npm start</p>
-              <p className="mb-0">2. Database: Ensure MongoDB is running</p>
-              <p className="mb-0">3. ML Service: cd ml-service && pip install -r requirements.txt && python app.py</p>
-            </div>
+        {/* Instructions */}
+        {!allSystemsOnline && (
+          <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-md text-xs font-mono text-slate-400">
+            <p>1. Backend → cd backend && npm start</p>
+            <p>2. MongoDB → start mongod</p>
+            <p>3. ML → cd ml-service && python app.py</p>
           </div>
         )}
       </div>
     </div>
   );
 }
-
-
-

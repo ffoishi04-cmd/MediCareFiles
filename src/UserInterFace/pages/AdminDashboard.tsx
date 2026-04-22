@@ -7,8 +7,8 @@ import { Users, Calendar, Package, Activity, TrendingUp, UserPlus, Settings, Dat
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { usersAPI, appointmentsAPI, medicinesAPI } from '../services/api';
+import { useAuth } from "../../contexts/AuthContext";
+import { ambulanceAPI } from "../../services/api";
 import { toast } from 'sonner';
 
 export function AdminDashboard() {

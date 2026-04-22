@@ -1,11 +1,11 @@
 import { createBrowserRouter } from "react-router";
-import { LandingPage } from "./pages/LandingPage";
-import { LoginPage } from "./pages/LoginPage";
-import { StudentDashboard } from "./pages/StudentDashboard";
-import { DoctorDashboard } from "./pages/DoctorDashboard";
-import { PharmacyDashboard } from "./pages/PharmacyDashboard";
-import { AdminDashboard } from "./pages/AdminDashboard";
-import { AmbulanceModule } from "./pages/AmbulanceModule";
+import { LandingPage } from "./UserInterface/pages/LandingPage";
+import { LoginPage } from "./UserInterface/pages/LoginPage";
+import { StudentDashboard } from "./UserInterface/pages/StudentDashboard";
+import { DoctorDashboard } from "./UserInterface/pages/DoctorDashboard";
+import { PharmacyDashboard } from "./UserInterface/pages/PharmacyDashboard";
+import { AdminDashboard } from "./UserInterface/pages/AdminDashboard";
+import { AmbulanceModule } from "./UserInterface/pages/AmbulanceModule";
 
 export const router = createBrowserRouter([
   {

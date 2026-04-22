@@ -5,7 +5,7 @@ import {
   Lock,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
 import { NotificationCenter } from "./NotificationCenter";
 
 interface CommandHeaderProps {

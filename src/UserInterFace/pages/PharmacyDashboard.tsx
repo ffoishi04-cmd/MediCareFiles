@@ -4,9 +4,9 @@ import { CommandStatCard } from '../components/CommandStatCard';
 import { MLCommandCard } from '../components/MLCommandCard';
 import { AnimatedMLDiagnostic } from '../components/AnimatedMLDiagnostic';
 import { EmergencyAlert } from '../components/EmergencyAlert';
-import { Package, AlertTriangle, TrendingUp, Activity, Search, Database, Loader2 } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
-import { medicinesAPI, mlAPI } from '../services/api';
+
+import { useAuth } from "../../contexts/AuthContext";
+import { medicinesAPI, mlAPI } from "../../services/api";
 import { toast } from 'sonner';
 
 interface MedicineData {

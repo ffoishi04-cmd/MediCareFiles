@@ -3,7 +3,7 @@ import { CommandHeader } from '../components/CommandHeader';
 import { CommandStatCard } from '../components/CommandStatCard';
 import { Ambulance, MapPin, Phone, Clock, User, Activity, AlertCircle, Navigation, Shield, Loader2 } from 'lucide-react';
 import { Link } from 'react-router';
-import { ambulanceAPI } from '../services/api';
+import { ambulanceAPI } from "../../services/api";
 import { toast } from 'sonner';
 
 export function AmbulanceModule() {

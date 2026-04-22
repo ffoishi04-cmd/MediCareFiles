@@ -6,8 +6,8 @@ import { AnimatedMLDiagnostic } from '../components/AnimatedMLDiagnostic';
 import { EmergencyAlert } from '../components/EmergencyAlert';
 import { Calendar, Users, FileText, Clock, User, Activity, AlertTriangle, Shield, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useAuth } from '../contexts/AuthContext';
-import { appointmentsAPI, mlAPI } from '../services/api'; 
+import { useAuth } from "../../contexts/AuthContext";
+import { appointmentsAPI, mlAPI } from "../../services/api";
 import { toast } from 'sonner';
 
 interface AppointmentData {

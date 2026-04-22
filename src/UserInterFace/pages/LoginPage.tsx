@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Shield, Lock, Mail, User, Key, Database, AlertCircle, Wifi, WifiOff } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from "../../contexts/AuthContext";
 import { motion } from 'framer-motion';
 
 export function LoginPage() {
